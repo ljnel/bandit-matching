@@ -1,12 +1,13 @@
 "Here we define the environment (the preference lists)."
 
 import numpy as np
+import matplotlib.pyplot as plt
 from simulation import simulate
 
 
-def get_random_preferences(beta, N, L):
+def get_corr_preferences(beta, N, L):
     """
-    Generate the mean rewards randomly as in the paper, with N bandits and L arms.
+    Generate correlated preferences as in the paper.
     Returns an (N, L) array.
     As beta -> infinity, the player's rewards get more correlated.
     """
@@ -15,7 +16,23 @@ def get_random_preferences(beta, N, L):
     mu = beta * x + eps
     return np.argsort(mu)
 
-bpref = get_random_preferences(1, 5, 5)
-apref = np.vstack([np.random.permutation(range(5)) for _ in range(5)])
 
-simulate(.1, bpref, apref, 10)
+def get_global_preferences(N):
+    return np.vstack([np.array(range(N)) for _ in range(N)])
+
+
+def corr_pref_experiment(lam, beta, N, T):
+    bpref = get_corr_preferences(beta, N, N)
+    apref = np.vstack([np.random.permutation(range(N)) for _ in range(N)])
+    return simulate(lam, bpref, apref, T)
+
+
+def global_pref_experiment(lam, N, T):
+    bpref = get_global_preferences(N)
+    apref = get_global_preferences(N)
+    return simulate(lam, bpref, apref, T)
+
+
+def cum_rew_plot(r):
+    plt.plot(r.cumsum(0), alpha=.5)
+    plt.savefig('plot')

@@ -10,8 +10,8 @@ Protocol:
 class CA_UCB:
     def __init__(self, lam, apref, id):
         self.n_arms = len(apref)
+        self.n_pulled = np.zeros(self.n_arms)
         self.mu = np.zeros(self.n_arms)
-        self.n = np.zeros(self.n_arms)
         self.apref = apref
         self.t = 0
         self.id = id
@@ -21,13 +21,13 @@ class CA_UCB:
     def get_plausible(self, winners):
         "Based on the last round's winners, get the plausible set."
         "winners: list of (arm, bandit) pairs"
-        plausible = set(self.n_arms)
-        for arm, bandit in winners.items():
+        plausible = set(range(self.n_arms))
+        for arm, bandit in winners:
             this_pos = np.argwhere(self.apref[arm] == self.id)
             other_pos = np.argwhere(self.apref[arm] == bandit)
             if other_pos < this_pos:
                 plausible.remove(arm)
-        return np.array(plausible)
+        return np.array([x for x in plausible])
 
     def choose(self, winners):
         "Choose the plausible arm with highest UCB."
@@ -44,8 +44,10 @@ class CA_UCB:
             return choice
 
     def update(self, x, r):
-        if r != 0:
-            self.n[x] += 1
-        self.mu[x] = ((self.n[x]-1) * self.mu[x] + r) / self.n[x]
         self.t += 1
-        self.ucb = self.mu + np.sqrt(np.log(self.t) / self.n)
+        if r != 0:
+            self.n_pulled[x] += 1
+            self.mu[x] = (((self.n_pulled[x]-1) * self.mu[x] + r)
+                          / self.n_pulled[x])
+            self.ucb[x] = (self.mu[x]
+                           + np.sqrt(np.log(self.t) / self.n_pulled[x]))

@@ -35,7 +35,7 @@ def resolve_conflicts(choices, apref):
 
 def simulate(lam, bpref, apref, T):
     N = len(bpref)
-    rewards = np.zeros(T, N)
+    rewards = np.zeros((T, N))
     winners = []
 
     bandits = [CA_UCB(lam, apref, n) for n in range(N)]
