@@ -9,6 +9,9 @@ Protocol:
 
 class CA_UCB:
     def __init__(self, lam, apref, id):
+        """
+        NB: apref in decreasing order of preference
+        """
         self.n_arms = len(apref)
         self.n_pulled = np.zeros(self.n_arms)
         self.mu = np.zeros(self.n_arms)
@@ -22,11 +25,15 @@ class CA_UCB:
         "Based on the last round's winners, get the plausible set."
         "winners: list of (arm, bandit) pairs"
         plausible = set(range(self.n_arms))
+        n_better = np.zeros(self.n_arms)
         for arm, bandit in winners:
             this_pos = np.argwhere(self.apref[arm] == self.id)
             other_pos = np.argwhere(self.apref[arm] == bandit)
             if other_pos < this_pos:
-                plausible.remove(arm)
+                if n_better[arm] < 2:
+                    n_better[arm] += 1
+                else:
+                    plausible.remove(arm)
         return np.array([x for x in plausible])
 
     def choose(self, winners):
