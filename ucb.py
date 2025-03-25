@@ -8,7 +8,7 @@ Protocol:
 
 
 class CA_UCB:
-    def __init__(self, lam, apref, id):
+    def __init__(self, lam, apref, id, multiple=False):
         """
         NB: apref in decreasing order of preference
         """
@@ -20,19 +20,35 @@ class CA_UCB:
         self.id = id
         self.lam = lam
         self.ucb = np.full(self.n_arms, np.inf)
+        self.plausible_fn = self.get_plausible if not multiple \
+            else self.get_plausible2
 
     def get_plausible(self, winners):
         "Based on the last round's winners, get the plausible set."
         "winners: list of (arm, bandit) pairs"
         plausible = set(range(self.n_arms))
+        for arm, bandit in winners:
+            this_pos = np.argwhere(self.apref[arm] == self.id)[0, 0]
+            #print(f'this_pos {this_pos}')
+            other_pos = np.argwhere(self.apref[arm] == bandit)[0, 0]
+            #print(f'other_pos {other_pos}')
+            if other_pos < this_pos:
+                plausible.remove(arm)
+        return np.array([x for x in plausible])
+
+    def get_plausible2(self, winners):
+        "Based on the last round's winners, get the plausible set."
+        "winners: list of (arm, bandit) pairs"
+        plausible = set(range(self.n_arms))
         n_better = np.zeros(self.n_arms)
         for arm, bandit in winners:
-            this_pos = np.argwhere(self.apref[arm] == self.id)
-            other_pos = np.argwhere(self.apref[arm] == bandit)
+            this_pos = np.argwhere(self.apref[arm] == self.id)[0, 0]
+            #print(f'this_pos {this_pos}')
+            other_pos = np.argwhere(self.apref[arm] == bandit)[0, 0]
+            #print(f'other_pos {other_pos}')
             if other_pos < this_pos:
-                if n_better[arm] < 2:
-                    n_better[arm] += 1
-                else:
+                n_better[arm] += 1
+                if n_better[arm] >= 2:
                     plausible.remove(arm)
         return np.array([x for x in plausible])
 
@@ -45,7 +61,8 @@ class CA_UCB:
         elif np.random.rand() < self.lam:  # randomization strategy
             return self.prev
         else:
-            idx = self.get_plausible(winners)
+            idx = self.plausible_fn(winners)
+            #print(f'Arm {self.id} now choosing from {idx}')
             choice = idx[np.argmax(self.ucb[idx])]
             self.prev = choice
             return choice

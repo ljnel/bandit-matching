@@ -67,16 +67,19 @@ def simulate(lam, bpref, apref, T, multiple=False):
     winners = []
     conflict_fn = resolve_conflicts if not multiple else resolve_conflicts2
 
-    bandits = [CA_UCB(lam, apref, n) for n in range(N)]
+    bandits = [CA_UCB(lam, apref, n, multiple) for n in range(N)]
 
     for t in range(T):
         choices = [bandits[n].choose(winners) for n in range(N)]
+        #print(f'choices: {choices}')
         outcome = conflict_fn(choices, apref)
-
+        #print(choices)
+        #print(outcome)
         winners = []
         for bandit, won in enumerate(outcome):
             if won:
                 winners.append((choices[bandit], bandit))
+        #print(winners)
 
         for n in range(N):
             rewards[t, n] = bpref[n, choices[n]] + np.random.randn() \

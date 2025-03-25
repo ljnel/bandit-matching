@@ -36,6 +36,9 @@ def global_pref_experiment(lam, N, T, multiple=False):
     else:
         best = sorted(2 * list(range(N)), reverse=True)[:N]
         max_rew = np.vstack([best for _ in range(T)])
+    #print(bpref)
+    #print(apref)
+    #print(rew)
     return max_rew - rew
 
 
@@ -50,10 +53,38 @@ def avg_rew_plot(r):
     plt.savefig('plot')
 
 
-def max_avg_rew_plot(r):
+def max_avg_rew_plot(r, ax=None, label=''):
     max_r = r.max(1)
     t = np.arange(1, len(r) + 1)
-    plt.plot(max_r.cumsum() / t)
-    plt.savefig('max_plot')
+    if ax is None:
+        plt.plot(max_r.cumsum() / t, label=label)
+        plt.show()
+    else:
+        ax.plot(max_r.cumsum() / t, label=label)
 
+
+def single_exp_plot():
+    Ns = [5, 10, 15, 20]
+    fig, ax = plt.subplots()
+    for N in Ns:
+        r = global_pref_experiment(.1, N, 5000, multiple=False)
+        max_avg_rew_plot(r, ax, label=f'N={N}')
+    ax.set_title('Regret in original setting', fontsize=20)
+    ax.set_xlabel('T')
+    ax.set_ylabel('Regret')
+    fig.legend()
+    fig.savefig('single_plot')
+
+
+def multiple_exp_plot():
+    Ns = [5, 10, 15, 20]
+    fig, ax = plt.subplots()
+    for N in Ns:
+        r = global_pref_experiment(.1, N, 5000, multiple=True)
+        max_avg_rew_plot(r, ax, label=f'N={N}')
+    ax.set_title('Regret in modified setting', fontsize=20)
+    ax.set_xlabel('T')
+    ax.set_ylabel('Regret')
+    fig.legend()
+    fig.savefig('multiple_plot')
 
